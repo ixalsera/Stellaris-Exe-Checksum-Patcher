@@ -354,11 +354,17 @@ class StellarisChecksumPatcherGUI(QMainWindow):
         self.settings.settings.app_version = self._APP_VERSION
         self.updater.set_local_version(str(self._APP_VERSION))
 
-        if self.configuration.game:
-            _last_platform = self.settings.game(self.configuration.game).last_patched_platform
-            if _last_platform:
-                if os_linux() or os_darwin():
-                    self.configuration.is_proton = _last_platform.lower() == patcher_models.Platform.WINDOWS
+        if not self.configuration.game:
+            self.configuration.game = self.settings.settings.last_selected_game
+
+        _last_platform = self.settings.game(self.configuration.game).last_patched_platform
+        if _last_platform:
+            if os_linux() or os_darwin():
+                self.configuration.is_proton = _last_platform.lower() == patcher_models.Platform.WINDOWS
+        self.configuration.version = self.settings.game(self.configuration.game).last_patched_version
+        self.configuration.selected_patches = self.settings.game(self.configuration.game).patches
+        self.configuration.platform = self.settings.game(self.configuration.game).last_patched_platform
+        self.configuration.selected_patches = self.settings.game(self.configuration.game).patches
 
     def load_app_styles(self):
         """Loads Styles, Icons and Fonts"""
@@ -776,6 +782,8 @@ class StellarisChecksumPatcherGUI(QMainWindow):
         # Store original config for comparison
         original_config = copy.deepcopy(self.configuration)
 
+        log.info(f"Config to PASS: {self.configuration=}")
+
         if not self.patch_config_dialog:
             # Pass a copy of the config
             self.patch_config_dialog = ConfigurePatchOptionsDialog(
@@ -801,9 +809,13 @@ class StellarisChecksumPatcherGUI(QMainWindow):
             # Also update app style
             self.apply_app_style()
 
-            self.settings.settings.last_selected_game = self.configuration.game
-
-            log.info(f"Configuration updated: {self.configuration}", silent=True)
+            with self.settings.batch_update():
+                self.settings.settings.last_selected_game = self.configuration.game
+                self.settings.game(self.configuration.game).last_patched_platform = self.configuration.platform
+                if not self.configuration.selected_patches:
+                    self.configuration.selected_patches = self.settings.game(self.configuration.game).patches
+                self.settings.game(self.configuration.game).patches = self.configuration.selected_patches
+                self.settings.game(self.configuration.game).last_patched_version = self.configuration.version
 
             # --- Determine platform ---
             platform = (
@@ -971,61 +983,47 @@ class StellarisChecksumPatcherGUI(QMainWindow):
             else:
                 get_patterns_config_local()
 
-        precached_game = self.settings.settings.last_selected_game  # Can be None or "" or pre-set with a game name
-        if not precached_game:
-            log.info(
-                f"Pre-cached game is empty. Inserting with entry at index 0 of {SUPPORTED_GAMES}: {SUPPORTED_GAMES[0]}",
-                silent=True,
-            )
-            precached_game = SUPPORTED_GAMES[0]
-
         self.multi_game_patcher.reload_patterns()
 
+        # Fallback if still empty
+        precached_game = self.configuration.game or self.settings.settings.last_selected_game or SUPPORTED_GAMES[0]
+
         # Determine platform
-        last_platform_str = self.settings.game(precached_game).last_patched_platform
-        if last_platform_str:
+        platform = None
+        if self.configuration.platform:
             try:
-                platform = patcher_models.Platform(last_platform_str.lower())
-                log.info(f"Using saved platform for {precached_game}: {platform}", silent=True)
+                platform = patcher_models.Platform(self.configuration.platform.lower())
             except ValueError:
-                log.warning(f"Invalid saved platform '{last_platform_str}', auto-detecting", silent=True)
-                platform = system() if not self.configuration.is_proton else patcher_models.Platform.WINDOWS
-        else:
-            platform = system()
-            log.info(f"No saved platform, auto-detected: {platform}", silent=True)
+                log.warning(f"Invalid saved platform '{self.configuration.platform}', auto-detecting", silent=True)
+        if platform is None:
+            platform = patcher_models.Platform.WINDOWS if self.configuration.is_proton else system()
+            self.configuration.platform = str(platform)
 
         # Get available version and find first one with patches available
         all_versions = self.multi_game_patcher.get_available_versions(precached_game)
-        last_patched_version = self.settings.game(precached_game).last_patched_version
-        log.info(f"Last patched version: {last_patched_version}", silent=True)
-        selected_version = patcher_models.KEY_VERSION_LATEST  # Default fallback
+        selected_version = self.configuration.version or patcher_models.KEY_VERSION_LATEST
 
-        for version in all_versions:
-            patches = self.multi_game_patcher.get_available_patches_for_game(precached_game, version, platform)
-            if patches:
-                selected_version = version
-                log.info(
-                    f"Selected version '{version}' for {precached_game} on {platform} ({len(patches)}) patches available.",
+        def _has_patches(v):
+            return bool(self.multi_game_patcher.get_available_patches_for_game(precached_game, v, platform))
+
+        if selected_version not in all_versions or not _has_patches(selected_version):
+            for version in all_versions:
+                if _has_patches(version):
+                    selected_version = version
+                    log.info(f"Selected version '{version}' for {precached_game} on {platform}", silent=True)
+                    break
+            else:
+                log.warning(
+                    f"No version with patches found for {precached_game} on {platform}, using fallback '{selected_version}'",
                     silent=True,
                 )
-                break
-            else:
-                log.warning(f"Version '{version}' has no patches available for platform '{platform}'.")
-        else:
-            log.warning(
-                f"No version with patches found for {precached_game} on {platform}, using fallback '{selected_version}'",
-                silent=True,
-            )
 
         # Update selection version cache
         self.selected_version = selected_version
 
         # --- Cache Configuration ---
-        self.configuration = patcher_models.PatchConfiguration(
-            game=precached_game,
-            version=self.selected_version,
-            is_proton=(os_windows() or (os_linux() and self.app_config.use_proton)),
-        )
+        self.configuration.game = precached_game
+        self.configuration.version = self.selected_version
         self.last_conf_game = self.configuration.game
 
         if self.configuration.game:

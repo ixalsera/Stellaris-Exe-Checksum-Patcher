@@ -358,6 +358,18 @@ class ConfigurePatchOptionsDialog(QDialog):
             else patcher_models.Platform.WINDOWS
         )
 
+    def get_selected_platform(self) -> patcher_models.Platform:
+        use_proton = self._should_use_proton()
+
+        if os_linux():
+            if not use_proton:
+                return patcher_models.Platform.LINUX
+        elif os_darwin():
+            if not use_proton:
+                return patcher_models.Platform.DARWIN
+
+        return patcher_models.Platform.WINDOWS
+
     def _validate_configuration(self, config: PatchConfiguration) -> bool:
         log.info(f"Validating patch configuration: {config}", silent=True)
 
@@ -626,6 +638,7 @@ class ConfigurePatchOptionsDialog(QDialog):
                 selected_patches.append(checkbox.property("patch_name"))
 
         self.patch_options_configuration.game = self.game_combobox.currentText()
+        self.patch_options_configuration.platform = self.get_selected_platform()
 
         # Get the key name from the display name
         display_version: str = self.version_combobox.currentText()

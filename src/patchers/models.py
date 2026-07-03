@@ -54,6 +54,7 @@ class PatchConfiguration:
     game: str
     version: str
     is_proton: bool
+    platform: str = field(default_factory=str)
     selected_patches: List[str] = field(default_factory=list)
 
     @classmethod
