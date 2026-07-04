@@ -13,7 +13,7 @@
                         "enabled": true,
                         "hex_find": "85C0",
                         "hex_replace": "31C0",
-                        "patch_pattern": "488D0D.{8}E8.{8}8BF8%s410F94.{2}E8"
+                        "patch_pattern": "488D0D.{8}E8.{8}8B.{2}%s.{2}0F94.{2}E8"
                     },
                     "checksum_warning": {
                         "display_name": "Warning",
@@ -29,7 +29,7 @@
                         "enabled": true,
                         "hex_find": "85C0",
                         "hex_replace": "31C0",
-                        "patch_pattern": "488B12488D0D.{8}E8.{8}%s0F84.{8}488D05"
+                        "patch_pattern": "488B12488D0D.{8}E8.{8}%s0F84.{8}488D.{2}"
                     }
                 }
             },
