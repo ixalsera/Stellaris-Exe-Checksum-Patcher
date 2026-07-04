@@ -782,8 +782,6 @@ class StellarisChecksumPatcherGUI(QMainWindow):
         # Store original config for comparison
         original_config = copy.deepcopy(self.configuration)
 
-        log.info(f"Config to PASS: {self.configuration=}")
-
         if not self.patch_config_dialog:
             # Pass a copy of the config
             self.patch_config_dialog = ConfigurePatchOptionsDialog(
