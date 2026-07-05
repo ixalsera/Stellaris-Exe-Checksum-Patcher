@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy uv/uvx directly from Astral's official image instead of curl|sh
 # Avoids install-script/PATH fragility under emulated conditions on cross-platform builds
-COPY --from=ghcr.io/astral-sh./uv:latest /uv /uvx /usr/local/bin
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
 WORKDIR /app
 
