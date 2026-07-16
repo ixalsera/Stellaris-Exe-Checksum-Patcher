@@ -26,7 +26,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libxcb-util1 libxcb-dri3-0 libxcb-present0 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+# RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Copy uv/uvx directly from Astral's official image instead of curl|sh
+# Avoids install-script/PATH fragility under emulated conditions on cross-platform builds
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
 WORKDIR /app
 

@@ -220,23 +220,11 @@ class ConfigurePatchOptionsDialog(QDialog):
         utilities_layout.setContentsMargins(5, 5, 5, 5)
         utilities_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        # --- Open Welcome Dialog Button ---
-        btn_show_welcome_dialog = QPushButton("Show Welcome Dialog")
-        btn_show_welcome_dialog.setFont(self.font)
-        btn_show_welcome_dialog.clicked.connect(self.show_welcome_dialog)
-        utilities_layout.addWidget(btn_show_welcome_dialog)
-
         # --- Fetch/Update Patterns File Button ---
         btn_update_patch_patterns = QPushButton("Update Patterns")
         btn_update_patch_patterns.setFont(self.font)
         btn_update_patch_patterns.clicked.connect(self.fetch_patch_patterns)
         utilities_layout.addWidget(btn_update_patch_patterns)
-
-        # --- Open Config Directory Button ---
-        btn_show_app_config_dir = QPushButton("Show App Config Folder")
-        btn_show_app_config_dir.setFont(self.font)
-        btn_show_app_config_dir.clicked.connect(self.show_app_config_folder)
-        utilities_layout.addWidget(btn_show_app_config_dir)
 
         # --- Show Game Folder Button ---
         btn_show_game_folder = QPushButton("Show Game Folder")
@@ -245,12 +233,24 @@ class ConfigurePatchOptionsDialog(QDialog):
         btn_show_game_folder.clicked.connect(self.show_game_folder)
         utilities_layout.addWidget(btn_show_game_folder)
 
+        # --- Open Config Directory Button ---
+        btn_show_app_config_dir = QPushButton("Show App Config Folder")
+        btn_show_app_config_dir.setFont(self.font)
+        btn_show_app_config_dir.clicked.connect(self.show_app_config_folder)
+        utilities_layout.addWidget(btn_show_app_config_dir)
+
         # --- Steam Validate Game Files Button ---
         btn_validate_game_files = QPushButton("Validate Integrity of Game Files (Steam)")
         btn_validate_game_files.setFont(self.font)
         btn_validate_game_files.setToolTip("Trigger the validation of game files through Steam.")
         btn_validate_game_files.clicked.connect(self._validate_steam_game_files)
         utilities_layout.addWidget(btn_validate_game_files)
+
+        # --- Open Welcome Dialog Button ---
+        btn_show_welcome_dialog = QPushButton("Show Welcome Dialog")
+        btn_show_welcome_dialog.setFont(self.font)
+        btn_show_welcome_dialog.clicked.connect(self.show_welcome_dialog)
+        utilities_layout.addWidget(btn_show_welcome_dialog)
 
         # --- Maximum Allowed Backups ---
         max_backups_control_layout = QHBoxLayout()
